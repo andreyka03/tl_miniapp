@@ -106,18 +106,10 @@
   .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 12px; font-size: 12px; color: var(--hint); }
   .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
 
-  /* week heatmap */
-  .week { display: grid; grid-template-columns: 24px repeat(24, 1fr); gap: 2px; margin-top: 10px; align-items: center; }
-  .week .dl { font-size: 11px; color: var(--hint); }
-  .week .dl.today { color: var(--text); font-weight: 700; }
-  .week .c { height: 18px; border-radius: 3px; background: var(--on); }
-  .week .c.cur { outline: 2px solid var(--text); outline-offset: -1px; z-index: 1; }
-  .week-axis { display: grid; grid-template-columns: 24px 1fr; gap: 2px; margin-top: 4px; }
-  .week-axis div { position: relative; height: 14px; font-size: 11px; color: var(--hint); font-variant-numeric: tabular-nums; }
-  .week-axis span { position: absolute; transform: translateX(-50%); }
-  .week-axis span:last-child { transform: translateX(-100%); }
-
   .foot { font-size: 12px; color: var(--hint); padding: 2px 6px; display: flex; flex-direction: column; gap: 6px; }
+  .verse { margin: 8px 0 0; padding: 14px 10px 4px; text-align: center; color: var(--text); }
+  .verse blockquote { margin: 0; font-size: 16px; line-height: 1.45; font-style: italic; }
+  .verse figcaption { margin-top: 6px; font-size: 13px; color: var(--hint); }
   .foot a, .link { color: var(--accent); text-decoration: none; cursor: pointer; background: none; border: 0; padding: 0; font: inherit; }
   .btn { border: 0; background: var(--btn); color: var(--btn-text); padding: 10px 16px; border-radius: 12px; font-weight: 600; cursor: pointer; margin-top: 10px; }
   .skeleton { height: 120px; border-radius: var(--radius); background: var(--card); opacity: .6; animation: pulse 1.2s ease-in-out infinite; }
@@ -200,8 +192,6 @@
   const hm = m => `${pad(Math.floor(m / 60))}:${pad(m % 60)}`;
   const dayFmt = new Intl.DateTimeFormat('uk-UA', { timeZone: TZ, weekday: 'short', day: 'numeric', month: 'short' });
   const clockFmt = new Intl.DateTimeFormat('uk-UA', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
-  const wdFmt = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short' });
-  const WD = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7 };
   const dur = mins => {
     const hh = Math.floor(mins / 60), mm = mins % 60;
     return hh && mm ? `${hh} год ${mm} хв` : hh ? `${hh} год` : `${mm} хв`;
@@ -350,8 +340,6 @@
     const dayIdx = state.day === 1 && tm ? 1 : 0;
     const day = v.days[dayIdx];
     out.push(renderTimeline(v, day, dayIdx, dayIdx ? tm : ts, !!tm, tomorrow !== null));
-    const week = renderWeek(v);
-    if (week) out.push(week);
     return out;
   }
 
@@ -427,43 +415,13 @@
     return h('section', { class: 'card' }, h('h2', {}, 'Графік · черга ' + shortOf(v.m, state.group)), tabs, sum, tl, chips, legend);
   }
 
-  function renderWeek(v) {
-    const pd = v.m.preset.data && v.m.preset.data[state.group];
-    if (!pd) return null;
-    const cells = [];
-    const wdNow = WD[wdFmt.format(new Date())] || 1;
-    const kyivMin = (() => { const p = clockFmt.format(new Date()).split(':'); return +p[0] * 60 + +p[1]; })();
-    const names = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
-    const bg = { on: 'var(--on)', off: 'var(--off)', maybe: 'repeating-linear-gradient(135deg,var(--maybe) 0 2px,var(--maybe-2) 2px 4px)', unk: 'var(--unk)' };
-    const split = (a, b) => `linear-gradient(90deg, ${a} 50%, ${b} 50%)`;
-    const cellBg = st => {
-      const [a, b] = HALF[st] || ['unk', 'unk'];
-      if (a === b) return bg[a];
-      const c = x => (x === 'maybe' ? 'var(--maybe)' : bg[x]);
-      return split(c(a), c(b));
-    };
-    for (let d = 1; d <= 7; d++) {
-      cells.push(h('div', { class: 'dl' + (d === wdNow ? ' today' : '') }, names[d - 1]));
-      const day = pd[String(d)] || {};
-      for (let hh = 1; hh <= 24; hh++) {
-        const cur = d === wdNow && Math.floor(kyivMin / 60) === hh - 1;
-        cells.push(h('div', { class: 'c' + (cur ? ' cur' : ''), style: 'background:' + cellBg(day[hh]) }));
-      }
-    }
-    const axis = h('div', { class: 'week-axis' }, h('div', {}), h('div', {}, [0, 6, 12, 18, 24].map(hh => h('span', { style: `left:${hh / 24 * 100}%` }, pad(hh)))));
-    return h('section', { class: 'card' },
-      h('h2', {}, 'Типовий тиждень · черга ' + shortOf(v.m, state.group)),
-      h('div', { class: 'muted' }, 'Базовий шаблон оператора. Фактичний графік на день вище може відрізнятися.'),
-      h('div', { class: 'week', role: 'img', 'aria-label': 'Типовий тижневий графік відключень' }, cells), axis);
-  }
-
   function renderFoot(v) {
     const checked = state.loaded ? clockFmt.format(new Date(state.loaded.fetchedAt)) : null;
     return h('div', { class: 'foot' },
       v && v.m.fact.update ? h('span', {}, `Дані оператора оновлено: ${v.m.fact.update}` + (checked ? ` · перевірено о ${checked}` : '')) : null,
-      h('span', {}, 'Неофіційний застосунок, не пов’язаний з енергокомпаніями. Графіки можуть змінюватися — орієнтуйтеся й на повідомлення оператора. Дані: ',
-        h('button', { class: 'link', onclick: () => openLink(MIRROR_URL) }, 'outage-data-ua'), ' · проєкт-основа: ',
-        h('button', { class: 'link', onclick: () => openLink(REPO_URL) }, 'ukraine-energy-monitor'), '.'));
+      h('figure', { class: 'verse' },
+        h('blockquote', {}, '«Господь – світло моє і порятунок мій: кого мені боятися?»'),
+        h('figcaption', {}, '(Книга Псалмів 26:1)')));
   }
 
   // ---------- actions ----------
