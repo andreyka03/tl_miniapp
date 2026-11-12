@@ -107,9 +107,6 @@
   .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
 
   .foot { font-size: 12px; color: var(--hint); padding: 2px 6px; display: flex; flex-direction: column; gap: 6px; }
-  .verse { margin: 8px 0 0; padding: 14px 10px 4px; text-align: center; color: var(--text); }
-  .verse blockquote { margin: 0; font-size: 16px; line-height: 1.45; font-style: italic; }
-  .verse figcaption { margin-top: 6px; font-size: 13px; color: var(--hint); }
   .foot a, .link { color: var(--accent); text-decoration: none; cursor: pointer; background: none; border: 0; padding: 0; font: inherit; }
   .btn { border: 0; background: var(--btn); color: var(--btn-text); padding: 10px 16px; border-radius: 12px; font-weight: 600; cursor: pointer; margin-top: 10px; }
   .skeleton { height: 120px; border-radius: var(--radius); background: var(--card); opacity: .6; animation: pulse 1.2s ease-in-out infinite; }
@@ -419,9 +416,7 @@
     const checked = state.loaded ? clockFmt.format(new Date(state.loaded.fetchedAt)) : null;
     return h('div', { class: 'foot' },
       v && v.m.fact.update ? h('span', {}, `Дані оператора оновлено: ${v.m.fact.update}` + (checked ? ` · перевірено о ${checked}` : '')) : null,
-      h('figure', { class: 'verse' },
-        h('blockquote', {}, '«Господь – світло моє і порятунок мій: кого мені боятися?»'),
-        h('figcaption', {}, '(Книга Псалмів 26:1)')));
+      h('span', {}, '«Господь – світло моє і порятунок мій: кого мені боятися?» (Книга Псалмів 26:1)'));
   }
 
   // ---------- actions ----------
